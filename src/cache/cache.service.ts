@@ -12,33 +12,27 @@ const client = redis.createClient({
 });
 
 @Injectable()
-class CacheServiceBase {
-  constructor() {
-    return client;
-  }
-}
+class _CacheService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger: Logger = new Logger('CacheService');
 
-class _CacheService
-  extends CacheServiceBase
-  implements OnModuleInit, OnModuleDestroy
-{
-  private readonly logger: Logger = new Logger(this.constructor.name);
-  private readonly client = redis.createClient({
-    url: ENV.REDIS_URL,
-  });
+  constructor() {
+    const obj = client as any;
+    obj.onModuleInit = this.onModuleInit.bind(this);
+    obj.onModuleDestroy = this.onModuleDestroy.bind(this);
+    return obj;
+  }
+
   async onModuleInit() {
-    this.client.on('error', (error) =>
-      this.logger.error(`Redis error: ${error}`),
-    );
-    this.client.on('connect', () => {
+    client.on('error', (error) => this.logger.error(`Redis error: ${error}`));
+    client.on('connect', () => {
       this.logger.log('Connected to Redis');
     });
-    await this.client.connect();
+    await client.connect();
   }
 
   async onModuleDestroy() {
     this.logger.log('Closing Redis connection...');
-    await this.client.quit();
+    await client.quit();
   }
 }
 

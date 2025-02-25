@@ -164,9 +164,9 @@ function getPrintfFormat(withTimestamp: boolean) {
     ? (info: any) => {
         return `${moment(info.timestamp).format(
           'YYYYMMDD HH:mm:ss',
-        )} ${info.level} [${info.context as string}] ${info.message as string}`;
+        )} ${info.level} [${info.context as string}] ${info.message as string}${info.stack ? `\n${info.stack}` : ''}`;
       }
     : (info: any) => {
-        return `${info.level} [${info.context as string}] ${info.message as string}`;
+        return `${info.level} [${info.context as string}] ${info.message as string}${info.stack ? `\n${info.stack}` : ''}`;
       };
 }

@@ -67,7 +67,6 @@ export class EnvBaseDto {
    */
   @Expose()
   @IsString()
-  @IsNotEmpty()
   POSTGRES_PASSWORD: string;
 
   /**

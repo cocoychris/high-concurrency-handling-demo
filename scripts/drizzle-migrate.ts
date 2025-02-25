@@ -32,18 +32,8 @@ async function main() {
   // Run the migrations
   await migrate(db, { migrationsFolder: migrationPath });
 
-  // Insert default roles
-  for (const role of ['Super Admin', 'Admin', 'User', 'Guest']) {
-    const existingUserRole = await db
-      ?.select({
-        name: allSchema.user_role.name,
-      })
-      .from(allSchema.user_role)
-      .where(eq(allSchema.user_role.name, role));
-    if (!existingUserRole[0]) {
-      await db?.insert(allSchema.user_role).values({ name: role });
-    }
-  }
+  // Insert default data here if needed
+  
   console.log('Migration complete');
   exit(0);
 }

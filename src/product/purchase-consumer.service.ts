@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { QueueService } from 'src/queue/queue.service';
 import { ProductService } from './product.service';
 import { Purchase } from './interface/purchase.interface';
@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class PurchaseConsumerService implements OnModuleInit {
+  private readonly logger: Logger = new Logger(this.constructor.name);
   constructor(
     private readonly queue: QueueService,
     private readonly drizzle: DrizzleService,
@@ -22,6 +23,7 @@ export class PurchaseConsumerService implements OnModuleInit {
       ProductService.PURCHASE_QUEUE,
       this._consumePurchase.bind(this),
     );
+    this.logger.log('Start consuming purchase queue');
   }
   /**
    * 消費購買訊息

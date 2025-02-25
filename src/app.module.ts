@@ -6,7 +6,6 @@ import { ENV } from './global/constant';
 
 import { RequestLoggerMiddleware } from 'src/global/middlewares/request-logger.middleware';
 import { DrizzleModule } from './drizzle/drizzle.module';
-import { UserModule } from './user/user.module';
 import { CacheModule } from './cache/cache.module';
 import { QueueModule } from './queue/queue.module';
 import { ProductModule } from './product/product.module';
@@ -22,7 +21,6 @@ import { ProductModule } from './product/product.module';
       },
     ]),
     DrizzleModule,
-    UserModule,
     CacheModule,
     QueueModule,
     ProductModule,

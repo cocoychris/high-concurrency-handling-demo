@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { QueueService } from 'src/queue/queue.service';
 import { Purchase } from './interface/purchase.interface';
+import { eq } from 'drizzle-orm';
 
 const PRODUCT_FIELD_STOCK = 'stock';
 const DEDUCT_STOCK_SCRIPT = loadLuaScript('./lua/deduct-stock.lua');
@@ -27,6 +28,17 @@ export class ProductService implements OnModuleInit {
   ) {}
   async onModuleInit() {
     await this.queue.assertQueue(PURCHASE_QUEUE, PURCHASE_QUEUE_PREFETCH);
+
+    // 載入所有產品資料至 Redis
+    const products = await this.drizzle.query.products.findMany();
+    for (const product of products) {
+      await this.cache.hSet(
+        productKey(product.id),
+        PRODUCT_FIELD_STOCK,
+        String(product.stock),
+      );
+    }
+    this.logger.log(`Loaded ${products.length} products to cache`);
   }
   /**
    * 設置產品及其庫存數量
@@ -64,6 +76,21 @@ export class ProductService implements OnModuleInit {
     };
   }
   /**
+   * 從資料庫取得產品資訊(庫存數量)
+   */
+  async getFromDatabase(id: number): Promise<ProductDto | null> {
+    const product = await this.drizzle.query.products.findFirst({
+      where: eq(products.id, id),
+    });
+    if (!product) {
+      return null;
+    }
+    return {
+      stock: product.stock,
+    };
+  }
+
+  /**
    * 購買產品
    */
   async purchase(id: number, dto: PurchaseProductDto): Promise<boolean> {
@@ -77,7 +104,7 @@ export class ProductService implements OnModuleInit {
       return false;
     }
     if (typeof newStock !== 'number') {
-      throw new Error('Redis 傳回值錯誤');
+      throw new Error('Redis return value is not a number');
     }
     // 有庫存並已扣庫
     try {
@@ -90,7 +117,10 @@ export class ProductService implements OnModuleInit {
       return true;
     } catch (error) {
       this.logger.error(
-        `推送已購買 Message Queue 時發生錯誤: ${errorToString(error)}`,
+        `Error occurred while sending purchase message: ${errorToString(
+          error,
+          true,
+        )}`,
       );
       // 回復庫存
       await this.cache.hIncrBy(
@@ -98,7 +128,9 @@ export class ProductService implements OnModuleInit {
         PRODUCT_FIELD_STOCK,
         dto.quantity,
       );
-      this.logger.warn(`已回復庫存數量 (quantity: ${dto.quantity})`);
+      this.logger.warn(
+        `Stock restored for product ${id} (quantity: ${dto.quantity})`,
+      );
       // 擲回讓全局 Error Handler 自動處理
       throw error;
     }
@@ -112,7 +144,7 @@ function productKey(id: number) {
 function loadLuaScript(relativePath: string): string {
   const scriptPath = path.join(__dirname, relativePath); // Adjust path as needed
   if (path.extname(scriptPath) !== '.lua') {
-    throw new Error('必須為 .lua 檔案');
+    throw new Error(`Not a Lua script: ${scriptPath}`);
   }
   return fs.readFileSync(scriptPath, 'utf-8');
 }

@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+// import { AxiosError } from 'axios';
 import { ENV } from 'src/global/constant';
 import { CodedHttpException } from '../error/CodedHttpException';
 
@@ -21,10 +22,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
     const isDevelop = ENV.NODE_ENV === 'development';
     const { httpAdapter } = this.httpAdapterHost;
-    const httpStatus =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    let httpStatus: number;
+    // if (exception instanceof AxiosError) {
+    //   httpStatus =
+    //     exception.response?.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
+    // } else
+    if (exception instanceof HttpException) {
+      httpStatus = exception.getStatus();
+    } else {
+      httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+    }
     const isInternalServerError = httpStatus >= 500 && httpStatus < 600;
     // 取得錯誤訊息
     let rawMessage: string | object;
@@ -52,7 +59,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest();
     const statusCode = httpStatus.toString();
-    const showStack = isInternalServerError && isDevelop;
     const message =
       rawMessage && rawMessage instanceof Object
         ? JSON.stringify(rawMessage)
@@ -66,12 +72,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
       name: exception.name,
       message,
       rawMessage: rawMessage !== message ? rawMessage : undefined,
-      stack: showStack ? exception.stack : undefined,
       errorCode: (exception as CodedHttpException).code,
     };
     // 紀錄錯誤訊息
-    if (isInternalServerError || isDevelop) {
+    if (isInternalServerError) {
       this.logger.error(JSON.stringify(responseObj, null, 2), exception.stack);
+      if (!isDevelop) {
+        responseObj.message = 'Internal Server Error';
+        responseObj.rawMessage = undefined;
+      }
+    } else {
+      this.logger.warn(JSON.stringify(responseObj, null, 2));
+      if (isDevelop) {
+        this.logger.warn(exception.stack);
+      }
     }
     // 傳回錯誤訊息
     httpAdapter.reply(ctx.getResponse(), responseObj, httpStatus);

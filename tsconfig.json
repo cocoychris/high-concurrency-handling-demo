@@ -22,7 +22,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "libs/**/*.ts",
+    "libs/**/*.ts"
   ],
   "exclude": [
     "scripts",
