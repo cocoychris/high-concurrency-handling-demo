@@ -1,6 +1,6 @@
 {
   "name": "high-concurrency-handling-demo",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "示範處理高併發(訂單搶購)的能力",
   "author": "Andrash Yang",
   "private": true,
