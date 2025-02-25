@@ -1,6 +1,10 @@
 # 高併發限量搶購 API 示範系統
 
-使用了 Redis、RabbitMQ、Postgres 等技術來實現高併發限量搶購的 API 示範系統。
+![參考架構圖](assets/high-concurrency-handling.png)
+
+👆 在高併發限量搶購的應用上，建議可以採用這樣的架構。這次專案受限時間規模。僅在單一後端服務上嘗試實作部分架構。
+
+本專案使用了 Redis、RabbitMQ、Postgres 等技術以建構系統。
 
 ## 環境配置
 

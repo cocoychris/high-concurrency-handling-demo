@@ -4,7 +4,7 @@ import { ProductService } from './product.service';
 import { Purchase } from './interface/purchase.interface';
 import { DrizzleService } from 'src/drizzle/drizzle.service';
 import { products } from './entities/product.entity';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class PurchaseConsumerService implements OnModuleInit {
@@ -33,7 +33,7 @@ export class PurchaseConsumerService implements OnModuleInit {
     await this.drizzle
       .update(products)
       .set({
-        stock: purchase.newStock,
+        stock: sql`${products.stock} - ${purchase.quantity}`,
       })
       .where(eq(products.id, purchase.productId))
       .execute();

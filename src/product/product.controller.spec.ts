@@ -5,9 +5,7 @@ import { ProductDto } from './dto/product.dto';
 import { PurchaseProductDto } from './dto/purchase-product.dto';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { INestApplication } from '@nestjs/common';
-
-import * as supertest from 'supertest';
-const request = supertest.default;
+import request from 'supertest';
 
 describe('ProductController', () => {
   let controller: ProductController;

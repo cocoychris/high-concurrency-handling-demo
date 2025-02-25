@@ -18,15 +18,16 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true,
-    "esModuleInterop": true,
+    "esModuleInterop": true
   },
   "include": [
     "src/**/*.ts",
-    "libs/**/*.ts"
+    "libs/**/*.ts",
   ],
   "exclude": [
     "scripts",
     "drizzle.config.ts",
-    "jest.config.js"
+    "jest.config.js",
+    "jest-e2e.config.js"
   ]
 }

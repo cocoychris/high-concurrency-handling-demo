@@ -68,35 +68,51 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   async sendString(queueName: string, message: string | string[]) {
     const messageList = Array.isArray(message) ? message : [message];
-    const connection = await this.connectionPool.acquire();
-    const channel = await connection.createChannel();
-    for (const message of messageList) {
-      channel.sendToQueue(queueName, Buffer.from(message), {
-        persistent: true,
-      });
-      this.logger.debug(`Sent message: ${message}`);
+    let connection!: amqp.Connection;
+    try {
+      connection = await this.connectionPool.acquire();
+      const channel = await connection.createChannel();
+      for (const message of messageList) {
+        channel.sendToQueue(queueName, Buffer.from(message), {
+          persistent: true,
+        });
+        this.logger.debug(`Sent message: ${message}`);
+      }
+      await this.connectionPool.release(connection);
+    } catch (error) {
+      if (connection) {
+        await this.connectionPool.release(connection);
+      }
+      throw error;
     }
-    await this.connectionPool.release(connection);
   }
 
   async consumeString(
     queueName: string,
     callback: (message: string | null, ack: () => void) => void,
   ) {
-    const connection = await this.connectionPool.acquire();
-    const channel = await connection.createChannel();
-    await channel.consume(
-      queueName,
-      (message: amqp.ConsumeMessage | null) => {
-        const ack = () => {
-          channel.ack(message as amqp.Message);
-          this.logger.debug(`Ack message: ${message?.content.toString()}`);
-        };
-        callback(message && message.content.toString(), ack);
-      },
-      { noAck: false },
-    );
-    // await this.connectionPool.release(connection);
+    let connection!: amqp.Connection;
+    try {
+      connection = await this.connectionPool.acquire();
+      const channel = await connection.createChannel();
+      await channel.consume(
+        queueName,
+        (message: amqp.ConsumeMessage | null) => {
+          const ack = () => {
+            channel.ack(message as amqp.Message);
+            this.logger.debug(`Ack message: ${message?.content.toString()}`);
+          };
+          callback(message && message.content.toString(), ack);
+        },
+        { noAck: false },
+      );
+      await this.connectionPool.release(connection);
+    } catch (error) {
+      if (connection) {
+        await this.connectionPool.release(connection);
+      }
+      throw error;
+    }
   }
 
   async sendJson<T extends Record<string, any>>(
@@ -115,5 +131,24 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     await this.consumeString(queueName, (message, ack) => {
       callback(message ? JSON.parse(message) : null, ack);
     });
+  }
+
+  async purgeQueue(queueName: string) {
+    let connection!: amqp.Connection;
+    try {
+      connection = await this.connectionPool.acquire();
+      const channel = await connection.createChannel();
+
+      await channel.purgeQueue(queueName);
+      this.logger.debug(`Queue '${queueName}' purged successfully.`);
+
+      await channel.close();
+      await this.connectionPool.release(connection);
+    } catch (error) {
+      this.logger.error('Error purging queue:', error);
+      if (connection) {
+        await this.connectionPool.release(connection);
+      }
+    }
   }
 }

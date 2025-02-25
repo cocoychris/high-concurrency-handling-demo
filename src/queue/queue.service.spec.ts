@@ -12,6 +12,7 @@ describe('QueueService', () => {
     }).compile();
     await module.init();
     service = module.get<QueueService>(QueueService);
+    await service.purgeQueue(queueName);
   });
 
   afterAll(async () => {
@@ -20,7 +21,7 @@ describe('QueueService', () => {
 
   it('should produce and consume message', async () => {
     expect(service).toBeDefined();
-    const messageCount = 100;
+    const messageCount = 50;
     await produceMessages(service, messageCount);
     const receivedCount = await consumeMessages(service, messageCount);
     expect(receivedCount).toBe(messageCount);

@@ -37,4 +37,4 @@ class _CacheService implements OnModuleInit, OnModuleDestroy {
 }
 
 export const CacheService = _CacheService;
-export type CacheService = typeof client;
+export type CacheService = typeof client & OnModuleInit & OnModuleDestroy;
