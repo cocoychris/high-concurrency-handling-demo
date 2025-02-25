@@ -4,7 +4,7 @@
 
 👆 在高併發限量搶購的應用上，建議可以採用這樣的架構。這次專案受限時間規模。僅在單一後端服務上嘗試實作部分架構。
 
-本專案使用了 Redis、RabbitMQ、Postgres 等技術以建構系統。
+本專案以 NestJS 框架為基礎，使用了 Redis、RabbitMQ、PostgreSQL 等技術以建構系統。使用 Drizzle ORM 存取資料庫，並使用 NestJS 的 [`ThrottlerModule`](src/app.module.ts) 實現 API 限流。
 
 ## 環境配置
 
@@ -136,3 +136,8 @@ npm run test:cov
 ```bash
 npm run test:e2e
 ```
+
+### 備註
+
+- 我在進行高併發測試時遇到了網路連線問題，當 Request 較頻繁時，有連線被重置的狀況。推測是因為我使用 WSL 在 Windows 10 上開發。也許這樣的測試碰觸到 WSL 的系統限制。
+- 目前不確定在其他環境是否能正常測試。或許等我未來有時間再設法處理此問題。
