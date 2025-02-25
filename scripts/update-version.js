@@ -39,7 +39,7 @@ if (!isForce) {
   console.info('- Force mode enabled');
 }
 updatePackageJson();
-updateTextFile('./deployment/version.env', /^APP_VERSION="(\d\.\d\.\d)"$/m);
+// updateTextFile('./deployment/version.env', /^APP_VERSION="(\d\.\d\.\d)"$/m);
 if (autoCommit) {
   gitCommit(newVersion);
 }
