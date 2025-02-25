@@ -57,12 +57,13 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     await this.connectionPool.clear();
   }
 
-  async assertQueue(queueName: string, prefetch?: number) {
+  async assertQueue(queueName: string, prefetch?: number): Promise<boolean> {
     const connection = await this.connectionPool.acquire();
     const channel = await connection.createChannel();
     await channel.assertQueue(queueName, { durable: true });
     await channel.prefetch(prefetch ?? ENV.RABBIT_MQ_DEFAULT_PREFETCH);
     await this.connectionPool.release(connection);
+    return true;
   }
 
   async sendString(queueName: string, message: string | string[]) {
@@ -95,21 +96,21 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       },
       { noAck: false },
     );
-    await this.connectionPool.release(connection);
+    // await this.connectionPool.release(connection);
   }
 
-  async sendJson(
+  async sendJson<T extends Record<string, any>>(
     queueName: string,
-    object: Record<string, unknown> | Record<string, unknown>[],
+    object: T | T[],
   ) {
     const objectList = Array.isArray(object) ? object : [object];
     const messageList = objectList.map((obj) => JSON.stringify(obj));
     await this.sendString(queueName, messageList);
   }
 
-  async consumeJson(
+  async consumeJson<T extends Record<string, any>>(
     queueName: string,
-    callback: (object: Record<string, unknown> | null, ack: () => void) => void,
+    callback: (object: T | null, ack: () => void) => void,
   ) {
     await this.consumeString(queueName, (message, ack) => {
       callback(message ? JSON.parse(message) : null, ack);

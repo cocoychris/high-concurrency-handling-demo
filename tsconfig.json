@@ -26,6 +26,7 @@
   ],
   "exclude": [
     "scripts",
-    "drizzle.config.ts"
+    "drizzle.config.ts",
+    "jest.config.js"
   ]
 }
